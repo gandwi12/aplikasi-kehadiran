@@ -1,10 +1,14 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 import os
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///kehadiran.db')
+# Fix DATABASE_URL untuk PostgreSQL Railway
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///kehadiran.db')
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -21,11 +25,15 @@ with app.app_context():
 
 @app.route('/')
 def beranda():
+    return render_template('index.html')
+
+@app.route('/api')
+def api_info():
     return jsonify({
         'pesan': 'Aplikasi Pencatatan Kehadiran Mahasiswa',
         'status': 'aktif',
         'versi': '1.0.0',
-        'endpoints': ['/', '/kesehatan', '/kehadiran']
+        'endpoints': ['/api', '/kesehatan', '/kehadiran']
     })
 
 @app.route('/kesehatan')
