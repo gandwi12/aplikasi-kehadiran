@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kehadiran Mahasiswa</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+        .header { background: #1a73e8; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { margin-bottom: 15px; color: #333; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        button { background: #1a73e8; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #1557b0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }
+        th { background: #1a73e8; color: white; }
+        .btn-hapus { background: #e53935; padding: 5px 10px; font-size: 12px; }
+        .status { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Aplikasi Pencatatan Kehadiran Mahasiswa</h1>
+        <p>Platform as a Service — Railway</p>
+    </div>
+
+    <div class="container">
+        <!-- Form Tambah -->
+        <div class="card">
+            <h2>Tambah Kehadiran</h2>
+            <input type="text" id="nama" placeholder="Nama Mahasiswa">
+            <input type="text" id="nim" placeholder="NIM">
+            <input type="date" id="tanggal">
+            <select id="status">
+                <option value="hadir">Hadir</option>
+                <option value="izin">Izin</option>
+                <option value="sakit">Sakit</option>
+                <option value="alpha">Alpha</option>
+            </select>
+            <button onclick="tambahKehadiran()">Tambah</button>
+        </div>
+
+        <!-- Tabel Data -->
+        <div class="card">
+            <h2>Data Kehadiran</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nama</th>
+                        <th>NIM</th>
+                        <th>Tanggal</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelData">
+                    <tr><td colspan="6" style="text-align:center">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = '';
+
+        async function loadData() {
+            const res = await fetch(BASE_URL + '/kehadiran');
+            const json = await res.json();
+            const tbody = document.getElementById('tabelData');
+            if (json.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Belum ada data</td></tr>';
+                return;
+            }
+            tbody.innerHTML = json.data.map(d => `
+                <tr>
+                    <td>${d.id}</td>
+                    <td>${d.nama}</td>
+                    <td>${d.nim}</td>
+                    <td>${d.tanggal}</td>
+                    <td class="status">${d.status}</td>
+                    <td><button class="btn-hapus" onclick="hapus(${d.id})">Hapus</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function tambahKehadiran() {
+            const nama = document.getElementById('nama').value;
+            const nim = document.getElementById('nim').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const status = document.getElementById('status').value;
+
+            if (!nama || !nim || !tanggal) {
+                alert('Semua field harus diisi!');
+                return;
+            }
+
+            await fetch(BASE_URL + '/kehadiran', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nama, nim, tanggal, status })
+            });
+
+            document.getElementById('nama').value = '';
+            document.getElementById('nim').value = '';
+            document.getElementById('tanggal').value = '';
+            loadData();
+        }
+
+        async function hapus(id) {
+            if (!confirm('Hapus data ini?')) return;
+            await fetch(BASE_URL + `/kehadiran/${id}`, { method: 'DELETE' });
+            loadData();
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
